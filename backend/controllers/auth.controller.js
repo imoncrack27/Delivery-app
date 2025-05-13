@@ -1,60 +1,86 @@
 // server/controllers/authController.js
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import { generateTokenAndSetCookie } from "../libs/utils/generateToken.js";
 
 // Register
 export const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
-
   try {
+    const { name, email, password, role } = req.body;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
     // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists)
-      return res.status(400).json({ message: "User already exists" });
+    const existingUser = await User.findOne({ name });
+    if (existingUser) {
+      return res.status(400).json({ error: "mame already exists" });
+    }
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail)
+      return res.status(400).json({ message: "email already exists" });
+
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
+    }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create new user
-    const user = new User({
+    const newUser = new User({
       name,
       email,
       password: hashedPassword,
       role,
     });
 
-    await user.save();
-    res.status(201).json({ message: "User registered successfully" });
+    if (newUser) {
+      generateTokenAndSetCookie(newUser.id, res);
+      await newUser.save();
+
+      res.status(201).json({
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+      });
+    } else {
+      res.status(400).json({ error: "Invalid user data" });
+    }
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+    console.log("Error in signup controller:", err.message);
   }
 };
 
 // Login
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
     // Find user
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
-
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
-
-    // Create JWT token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      user?.password || ""
     );
+    if (!user || !isPasswordCorrect)
+      return res.status(400).json({ error: "Invalid credentials" });
 
-    res.json({ token });
+    generateTokenAndSetCookie(user.id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+    console.log("Error in login controller:", err.message);
   }
 };
 

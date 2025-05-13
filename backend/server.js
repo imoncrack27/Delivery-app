@@ -14,11 +14,6 @@ const PORT = process.env.PORT || 5000; // Default to 5000 if PORT isn't set
 app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("API is running ...");
-});
-
 //Route Middleware
 app.use("/api/auth", authRoutes); // Use auth routes for authentication-related endpoints
 
