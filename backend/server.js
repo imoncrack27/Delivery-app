@@ -1,7 +1,9 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import connectMongoDB from "./db/connectMongoDB.js";
+
+import authRoutes from "./routes/auth.route.js";
 
 dotenv.config();
 
@@ -17,17 +19,10 @@ app.get("/", (req, res) => {
   res.send("API is running ...");
 });
 
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    // Start the server only after successful DB connection
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1); // Exit if DB connection fails
-  });
+//Route Middleware
+app.use("/api/auth", authRoutes); // Use auth routes for authentication-related endpoints
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  connectMongoDB();
+});
