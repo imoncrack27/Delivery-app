@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <div className="min-h-screen bg-green-100 text-center p-10">
-        <h1 className="text-4xl font-bold text-green-700">
-          Tailwind is working!
-        </h1>
-      </div>
-    </>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </div>
   );
 }
 
