@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import connectMongoDB from "./db/connectMongoDB.js";
 
 import authRoutes from "./routes/auth.route.js";
+import menuRoutes from "./routes/menu.route.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(cookieParser()); // to parse cookies
 
 //Route Middleware
 app.use("/api/auth", authRoutes); // Use auth routes for authentication-related endpoints
+app.use("/api/menu", menuRoutes); // Use menu routes for menu-related endpoints
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
