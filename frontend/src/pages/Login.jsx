@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+//import { useAuth } from "../context/AuthContext"
 
-function Login() {
+const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -71,6 +72,6 @@ function Login() {
       </p>
     </div>
   );
-}
+};
 
 export default Login;

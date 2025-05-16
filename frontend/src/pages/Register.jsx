@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-function Register() {
+const Register = () => {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -93,6 +93,6 @@ function Register() {
       </p>
     </div>
   );
-}
+};
 
 export default Register;

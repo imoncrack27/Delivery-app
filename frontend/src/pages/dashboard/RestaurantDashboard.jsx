@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Navbar from "../../components/Navbar";
 import { dummyMenu, dummyOrders } from "../../data/restaurantDummy";
+import toast from "react-hot-toast";
 import AddMenuModal from "../../components/AddMenuModal";
 import EditMenuModal from "../../components/EditMenuModal";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
@@ -16,6 +17,7 @@ export default function RestaurantOwnerDashboard() {
 
   const handleDelete = (id) => {
     setMenuItems((prev) => prev.filter((item) => item.id !== id));
+    toast.success("Item deleted successfully!");
   };
 
   return (
@@ -37,7 +39,10 @@ export default function RestaurantOwnerDashboard() {
           {showAddModal && (
             <AddMenuModal
               onClose={() => setShowAddModal(false)}
-              onAdd={(newItem) => setMenuItems([...menuItems, newItem])}
+              onAdd={(newItem) => {
+                setMenuItems([...menuItems, newItem]);
+                toast.success("Item added successfully!");
+              }}
             />
           )}
 
@@ -68,6 +73,7 @@ export default function RestaurantOwnerDashboard() {
                               item.id === updatedItem.id ? updatedItem : item
                             )
                           );
+                          toast.success("Item updated!");
                         }}
                       />
                     )}
