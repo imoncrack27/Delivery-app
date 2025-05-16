@@ -26,3 +26,13 @@ export const protectRoute = async (req, res, next) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// Optional: Only allow restaurant role
+export const restaurantOnly = (req, res, next) => {
+  if (req.user?.role !== "restaurant") {
+    return res
+      .status(403)
+      .json({ message: "Forbidden: Restaurant access only" });
+  }
+  next();
+};
