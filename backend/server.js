@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 5000; // Default to 5000 if PORT isn't set
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 
 app.use(cookieParser()); // to parse cookies

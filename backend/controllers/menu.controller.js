@@ -3,7 +3,9 @@ import MenuItem from "../models/MenuItem.js";
 // Get all menu items for a restaurant
 export const getMenu = async (req, res) => {
   try {
-    const items = await MenuItem.find({ restaurantId: req.user.id });
+    console.log("req.user._id:", req.user.id);
+    const items = await MenuItem.find({ restaurantId: req.user._id });
+
     res.json(items);
   } catch (error) {
     res.status(500).json({ message: "Server error" });

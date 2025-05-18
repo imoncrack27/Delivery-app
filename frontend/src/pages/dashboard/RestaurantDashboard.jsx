@@ -1,140 +1,181 @@
-import { useState } from "react";
-import Navbar from "../../components/Navbar";
-import { dummyMenu, dummyOrders } from "../../data/restaurantDummy";
-import toast from "react-hot-toast";
-import AddMenuModal from "../../components/AddMenuModal";
-import EditMenuModal from "../../components/EditMenuModal";
-import DeleteConfirmModal from "../../components/DeleteConfirmModal";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-export default function RestaurantOwnerDashboard() {
-  const [menuItems, setMenuItems] = useState(dummyMenu);
-  const [orders] = useState(dummyOrders);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
+const RestaurantDashboard = () => {
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [form, setForm] = useState({ name: "", description: "", price: "" });
 
-  const handleDelete = (id) => {
-    setMenuItems((prev) => prev.filter((item) => item.id !== id));
-    toast.success("Item deleted successfully!");
+  // Fetch menu on mount
+  useEffect(() => {
+    fetchMenu();
+  }, []);
+
+  const fetchMenu = async () => {
+    try {
+      // If you're storing token in localStorage and sending as Bearer token, use this:
+      // const token = localStorage.getItem("token");
+      // const headers = { Authorization: `Bearer ${token}` };
+
+      // If you use httpOnly cookie for JWT, just send withCredentials:true and no headers needed
+      const response = await axios.get("http://localhost:5000/api/menu", {
+        withCredentials: true, // send cookies automatically
+      });
+      console.log("Menu data:", response.data);
+      setMenuItems(response.data.menu || []);
+    } catch (err) {
+      console.error("Fetch failed:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const openCreateModal = () => {
+    setForm({ name: "", description: "", price: "" });
+    setEditingItem(null);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (item) => {
+    setForm(item);
+    setEditingItem(item);
+    setModalOpen(true);
+  };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      let res;
+      if (editingItem) {
+        res = await axios.put(
+          `http://localhost:5000/api/menu/${editingItem._id}`,
+          form,
+          { withCredentials: true }
+        );
+        setMenuItems((prev) =>
+          prev.map((item) => (item._id === editingItem._id ? res.data : item))
+        );
+      } else {
+        res = await axios.post("http://localhost:5000/api/menu", form, {
+          withCredentials: true,
+        });
+        setMenuItems((prev) => [...prev, res.data]);
+      }
+      setModalOpen(false);
+    } catch (err) {
+      console.error("Submit failed:", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/menu/${id}`, {
+        withCredentials: true,
+      });
+      setMenuItems((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  if (loading) return <p>Loading menu...</p>;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar with role="restaurant" */}
-      <Navbar role="restaurant" />
+    <div className="p-4 max-w-5xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Restaurant Dashboard</h1>
+        <button
+          onClick={openCreateModal}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          + Add Menu Item
+        </button>
+      </div>
 
-      <main className="max-w-6xl mx-auto p-4 space-y-12">
-        {/* 1. Menu Management Section */}
-        <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">My Menu</h2>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            + Add Menu Item
-          </button>
-
-          {showAddModal && (
-            <AddMenuModal
-              onClose={() => setShowAddModal(false)}
-              onAdd={(newItem) => {
-                setMenuItems([...menuItems, newItem]);
-                toast.success("Item added successfully!");
-              }}
-            />
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {menuItems.map((item) => (
-              <div key={item.id} className="bg-white p-6 rounded-xl shadow">
-                <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
-                <p className="text-gray-600 mb-3">{item.description}</p>
-                <p className="text-green-600 font-semibold">₱{item.price}</p>
-                <div className="flex justify-between items-center text-center gap-4">
-                  <div className="">
-                    <button
-                      onClick={() => {
-                        setEditItem(item);
-                        setShowEditModal(true);
-                      }}
-                      className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      Edit
-                    </button>
-                    {showEditModal && (
-                      <EditMenuModal
-                        item={editItem}
-                        onClose={() => setShowEditModal(false)}
-                        onUpdate={(updatedItem) => {
-                          setMenuItems((prev) =>
-                            prev.map((item) =>
-                              item.id === updatedItem.id ? updatedItem : item
-                            )
-                          );
-                          toast.success("Item updated!");
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <button
-                      onClick={() => {
-                        setItemToDelete(item);
-                        setShowDeleteModal(true);
-                      }}
-                      className="mb-4   px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                    {showDeleteModal && itemToDelete && (
-                      <DeleteConfirmModal
-                        item={itemToDelete}
-                        onClose={() => setShowDeleteModal(false)}
-                        onDelete={handleDelete}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 2. Orders Section */}
-        <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Incoming Orders
-          </h2>
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-white p-6 rounded-xl shadow flex flex-col sm:flex-row justify-between items-start sm:items-center"
+      <div className="grid gap-4 md:grid-cols-2">
+        {menuItems.map((item) => (
+          <div key={item._id} className="bg-white shadow p-4 rounded">
+            <h3 className="text-xl font-semibold">{item.name}</h3>
+            <p className="text-gray-600">{item.description}</p>
+            <p className="mt-1 font-bold">₱{item.price}</p>
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => openEditModal(item)}
+                className="text-sm bg-blue-500 text-white px-3 py-1 rounded"
               >
-                <div>
-                  <p className="font-semibold">Order #{order.id}</p>
-                  <p>Customer: {order.customer}</p>
-                  <p>Items: {order.items.join(", ")}</p>
-                  <p>Total: ₱{order.total}</p>
-                </div>
-                <span
-                  className={`mt-3 sm:mt-0 px-3 py-1 rounded-full text-sm ${
-                    order.status === "pending"
-                      ? "bg-yellow-200 text-yellow-800"
-                      : order.status === "accepted"
-                      ? "bg-green-200 text-green-800"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </div>
-            ))}
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(item._id)}
+                className="text-sm bg-red-500 text-white px-3 py-1 rounded"
+              >
+                Delete
+              </button>
+            </div>
           </div>
-        </section>
-      </main>
+        ))}
+      </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">
+              {editingItem ? "Edit" : "Add"} Menu Item
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                name="name"
+                placeholder="Name"
+                value={form.name}
+                onChange={handleChange}
+                className="w-full mb-3 p-2 border rounded"
+                required
+              />
+              <textarea
+                name="description"
+                placeholder="Description"
+                value={form.description}
+                onChange={handleChange}
+                className="w-full mb-3 p-2 border rounded"
+              />
+              <input
+                type="number"
+                name="price"
+                placeholder="Price"
+                value={form.price}
+                onChange={handleChange}
+                className="w-full mb-3 p-2 border rounded"
+                required
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded"
+                >
+                  {editingItem ? "Update" : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default RestaurantDashboard;

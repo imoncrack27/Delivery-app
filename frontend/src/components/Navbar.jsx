@@ -4,7 +4,7 @@ export default function Navbar({ role }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    //localStorage.removeItem("token");
     navigate("/");
   };
 

@@ -6,11 +6,11 @@ import {
   deleteMenuItem,
 } from "../controllers/menu.controller.js";
 
-import { protectRoute, restaurantOnly } from "../middleware/protectRoute.js";
+//import { protectRoute } from "../middleware/protectRoute.js";
 
 const router = express.Router();
 
-router.use(protectRoute, restaurantOnly);
+//router.use(protectRoute /*restaurantOnly*/);
 
 router.get("/", getMenu);
 router.post("/", createMenuItem);
